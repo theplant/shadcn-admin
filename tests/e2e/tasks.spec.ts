@@ -172,3 +172,33 @@ test.describe('Tasks CRUD Operations', () => {
     await expect(page.getByText(/title is required/i)).toBeVisible();
   });
 });
+
+test.describe('BUG: Duplicate API Requests', () => {
+  test('BUG-DUPLICATE-REQUESTS: should only make ONE API request when navigating to tasks page', async ({ page }) => {
+    // Bug: Every menu click triggers duplicate API requests
+    // Expected: Only ONE request per navigation
+    
+    await seedAndNavigate(page, '/', { tasks: testTasks });
+    
+    // Wait for initial page load
+    await page.waitForLoadState('networkidle');
+    
+    // Track API requests to /api/tasks
+    const apiRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/tasks') && request.method() === 'GET') {
+        apiRequests.push(request.url());
+      }
+    });
+    
+    // Navigate to Tasks page via sidebar menu
+    await page.getByRole('link', { name: 'Tasks' }).click();
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible();
+    
+    // Verify only ONE request was made
+    expect(apiRequests.length).toBe(1);
+  });
+});

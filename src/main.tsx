@@ -101,22 +101,27 @@ async function enableMocking() {
 }
 
 // Render the app
+// Note: StrictMode is disabled in development when using MSW because it causes
+// duplicate API requests due to the mount/unmount/remount cycle combined with
+// AbortController cancellation. In production, StrictMode is enabled.
 const rootElement = document.getElementById('root')!
 if (!rootElement.innerHTML) {
   enableMocking().then(() => {
     const root = ReactDOM.createRoot(rootElement)
+    const app = (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <FontProvider>
+            <DirectionProvider>
+              <RouterProvider router={router} />
+            </DirectionProvider>
+          </FontProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    )
+    // Only use StrictMode in production to avoid duplicate API requests in dev
     root.render(
-      <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <FontProvider>
-              <DirectionProvider>
-                <RouterProvider router={router} />
-              </DirectionProvider>
-            </FontProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </StrictMode>
+      import.meta.env.PROD ? <StrictMode>{app}</StrictMode> : app
     )
   })
 }
