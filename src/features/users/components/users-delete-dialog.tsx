@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { type User } from '../data/schema'
+import type { User } from '@/api/generated/models'
+import { useDeleteUser, getListUsersQueryKey } from '@/api/generated/endpoints/users/users'
 
 type UserDeleteDialogProps = {
   open: boolean
@@ -21,12 +23,22 @@ export function UsersDeleteDialog({
   currentRow,
 }: UserDeleteDialogProps) {
   const [value, setValue] = useState('')
+  const queryClient = useQueryClient()
+  const deleteMutation = useDeleteUser()
 
   const handleDelete = () => {
     if (value.trim() !== currentRow.username) return
 
-    onOpenChange(false)
-    showSubmittedData(currentRow, 'The following user has been deleted:')
+    deleteMutation.mutate(
+      { userId: currentRow.id },
+      {
+        onSuccess: () => {
+          toast.success('User deleted successfully')
+          queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() })
+          onOpenChange(false)
+        },
+      }
+    )
   }
 
   return (

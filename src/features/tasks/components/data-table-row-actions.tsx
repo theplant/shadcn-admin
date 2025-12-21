@@ -16,17 +16,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { labels } from '../data/data'
-import { taskSchema } from '../data/schema'
+import type { Task } from '@/api/generated/models'
 import { useTasks } from './tasks-provider'
 
-type DataTableRowActionsProps<TData> = {
-  row: Row<TData>
+type DataTableRowActionsProps = {
+  row: Row<Task>
 }
 
-export function DataTableRowActions<TData>({
+export function DataTableRowActions({
   row,
-}: DataTableRowActionsProps<TData>) {
-  const task = taskSchema.parse(row.original)
+}: DataTableRowActionsProps) {
+  const task = row.original as Task
 
   const { setOpen, setCurrentRow } = useTasks()
 

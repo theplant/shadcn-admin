@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { MailPlus, Send } from 'lucide-react'
-import { showSubmittedData } from '@/lib/show-submitted-data'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,6 +26,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { roles } from '../data/data'
+import type { InviteUserRequest } from '@/api/generated/models'
+import { useInviteUser, getListUsersQueryKey } from '@/api/generated/endpoints/users/users'
 
 const formSchema = z.object({
   email: z.email({
@@ -51,10 +54,26 @@ export function UsersInviteDialog({
     defaultValues: { email: '', role: '', desc: '' },
   })
 
+  const queryClient = useQueryClient()
+  const inviteMutation = useInviteUser()
+
   const onSubmit = (values: UserInviteForm) => {
-    form.reset()
-    showSubmittedData(values)
-    onOpenChange(false)
+    const inviteData: InviteUserRequest = {
+      email: values.email,
+      role: values.role as InviteUserRequest['role'],
+    }
+
+    inviteMutation.mutate(
+      { data: inviteData },
+      {
+        onSuccess: () => {
+          toast.success('Invitation sent successfully')
+          queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() })
+          form.reset()
+          onOpenChange(false)
+        },
+      }
+    )
   }
 
   return (

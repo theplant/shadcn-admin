@@ -3,7 +3,8 @@
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,7 +26,8 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { roles } from '../data/data'
-import { type User } from '../data/schema'
+import type { User, CreateUserRequest, UpdateUserRequest } from '@/api/generated/models'
+import { useCreateUser, useUpdateUser, getListUsersQueryKey } from '@/api/generated/endpoints/users/users'
 
 const formSchema = z
   .object({
@@ -127,10 +129,44 @@ export function UsersActionDialog({
         },
   })
 
+  const queryClient = useQueryClient()
+  const createMutation = useCreateUser()
+  const updateMutation = useUpdateUser()
+
   const onSubmit = (values: UserForm) => {
-    form.reset()
-    showSubmittedData(values)
-    onOpenChange(false)
+    const userData: CreateUserRequest = {
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      phoneNumber: values.phoneNumber,
+      role: values.role as CreateUserRequest['role'],
+    }
+
+    if (isEdit && currentRow) {
+      updateMutation.mutate(
+        { userId: currentRow.id, data: userData as UpdateUserRequest },
+        {
+          onSuccess: () => {
+            toast.success('User updated successfully')
+            queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() })
+            form.reset()
+            onOpenChange(false)
+          },
+        }
+      )
+    } else {
+      createMutation.mutate(
+        { data: userData },
+        {
+          onSuccess: () => {
+            toast.success('User created successfully')
+            queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() })
+            form.reset()
+            onOpenChange(false)
+          },
+        }
+      )
+    }
   }
 
   const isPasswordTouched = !!form.formState.dirtyFields.password

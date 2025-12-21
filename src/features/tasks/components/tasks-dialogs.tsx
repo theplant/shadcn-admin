@@ -1,11 +1,15 @@
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { TasksImportDialog } from './tasks-import-dialog'
 import { TasksMutateDrawer } from './tasks-mutate-drawer'
 import { useTasks } from './tasks-provider'
+import { useDeleteTask, getListTasksQueryKey } from '@/api/generated/endpoints/tasks/tasks'
 
 export function TasksDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useTasks()
+  const queryClient = useQueryClient()
+  const deleteMutation = useDeleteTask()
   return (
     <>
       <TasksMutateDrawer
@@ -45,13 +49,18 @@ export function TasksDialogs() {
               }, 500)
             }}
             handleConfirm={() => {
-              setOpen(null)
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-              showSubmittedData(
-                currentRow,
-                'The following task has been deleted:'
+              deleteMutation.mutate(
+                { taskId: currentRow.id },
+                {
+                  onSuccess: () => {
+                    toast.success('Task deleted successfully')
+                    queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() })
+                    setOpen(null)
+                    setTimeout(() => {
+                      setCurrentRow(null)
+                    }, 500)
+                  },
+                }
               )
             }}
             className='max-w-md'

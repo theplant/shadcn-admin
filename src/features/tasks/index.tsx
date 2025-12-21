@@ -4,13 +4,16 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useListTasks } from '@/api/generated/endpoints/tasks/tasks'
 import { TasksDialogs } from './components/tasks-dialogs'
 import { TasksPrimaryButtons } from './components/tasks-primary-buttons'
 import { TasksProvider } from './components/tasks-provider'
 import { TasksTable } from './components/tasks-table'
-import { tasks } from './data/tasks'
 
 export function Tasks() {
+  const { data, isLoading, error } = useListTasks()
+
   return (
     <TasksProvider>
       <Header fixed>
@@ -32,7 +35,16 @@ export function Tasks() {
           </div>
           <TasksPrimaryButtons />
         </div>
-        <TasksTable data={tasks} />
+        {isLoading ? (
+          <div className='space-y-4'>
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-64 w-full' />
+          </div>
+        ) : error ? (
+          <div className='text-destructive'>Failed to load tasks</div>
+        ) : (
+          <TasksTable data={data?.data ?? []} />
+        )}
       </Main>
 
       <TasksDialogs />

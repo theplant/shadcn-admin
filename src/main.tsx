@@ -87,21 +87,36 @@ declare module '@tanstack/react-router' {
   }
 }
 
+// Enable MSW mocking when no real backend is configured
+async function enableMocking() {
+  const hasRealBackend = !!import.meta.env.VITE_API_URL
+  
+  if (!hasRealBackend) {
+    const { worker } = await import('./mocks/browser')
+    console.log('[MSW] Mock Service Worker enabled')
+    return worker.start({ onUnhandledRequest: 'bypass' })
+  } else {
+    console.log('[App] Using real backend:', import.meta.env.VITE_API_URL)
+  }
+}
+
 // Render the app
 const rootElement = document.getElementById('root')!
 if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
-              <RouterProvider router={router} />
-            </DirectionProvider>
-          </FontProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </StrictMode>
-  )
+  enableMocking().then(() => {
+    const root = ReactDOM.createRoot(rootElement)
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <FontProvider>
+              <DirectionProvider>
+                <RouterProvider router={router} />
+              </DirectionProvider>
+            </FontProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </StrictMode>
+    )
+  })
 }

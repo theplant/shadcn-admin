@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -23,7 +24,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { type Task } from '../data/schema'
+import type { Task, CreateTaskRequest, UpdateTaskRequest } from '@/api/generated/models'
+import { useCreateTask, useUpdateTask, getListTasksQueryKey } from '@/api/generated/endpoints/tasks/tasks'
 
 type TaskMutateDrawerProps = {
   open: boolean
@@ -56,11 +58,36 @@ export function TasksMutateDrawer({
     },
   })
 
+  const queryClient = useQueryClient()
+  const createMutation = useCreateTask()
+  const updateMutation = useUpdateTask()
+
   const onSubmit = (data: TaskForm) => {
-    // do something with the form data
-    onOpenChange(false)
-    form.reset()
-    showSubmittedData(data)
+    if (isUpdate && currentRow) {
+      updateMutation.mutate(
+        { taskId: currentRow.id, data: data as UpdateTaskRequest },
+        {
+          onSuccess: () => {
+            toast.success('Task updated successfully')
+            queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() })
+            onOpenChange(false)
+            form.reset()
+          },
+        }
+      )
+    } else {
+      createMutation.mutate(
+        { data: data as CreateTaskRequest },
+        {
+          onSuccess: () => {
+            toast.success('Task created successfully')
+            queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() })
+            onOpenChange(false)
+            form.reset()
+          },
+        }
+      )
+    }
   }
 
   return (

@@ -5,17 +5,19 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useListUsers } from '@/api/generated/endpoints/users/users'
 import { UsersDialogs } from './components/users-dialogs'
 import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
-import { users } from './data/users'
 
 const route = getRouteApi('/_authenticated/users/')
 
 export function Users() {
   const search = route.useSearch()
   const navigate = route.useNavigate()
+  const { data, isLoading, error } = useListUsers()
 
   return (
     <UsersProvider>
@@ -38,7 +40,16 @@ export function Users() {
           </div>
           <UsersPrimaryButtons />
         </div>
-        <UsersTable data={users} search={search} navigate={navigate} />
+        {isLoading ? (
+          <div className='space-y-4'>
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-64 w-full' />
+          </div>
+        ) : error ? (
+          <div className='text-destructive'>Failed to load users</div>
+        ) : (
+          <UsersTable data={data?.data ?? []} search={search} navigate={navigate} />
+        )}
       </Main>
 
       <UsersDialogs />

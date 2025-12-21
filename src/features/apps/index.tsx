@@ -11,13 +11,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { apps } from './data/apps'
+import { useListApps } from '@/api/generated/endpoints/apps/apps'
+import { apps as staticApps } from './data/apps'
 
 const route = getRouteApi('/_authenticated/apps/')
 
@@ -41,7 +43,17 @@ export function Apps() {
   const [appType, setAppType] = useState(type)
   const [searchTerm, setSearchTerm] = useState(filter)
 
-  const filteredApps = apps
+  // Use API hook with fallback to static data for logo rendering
+  const { data, isLoading, error } = useListApps()
+  const apps = data?.data ?? []
+
+  // Merge API data with static app logos (logos are React components, not serializable)
+  const appsWithLogos = apps.map((app) => {
+    const staticApp = staticApps.find((s) => s.name === app.name)
+    return { ...app, logo: staticApp?.logo }
+  })
+
+  const filteredApps = appsWithLogos
     .sort((a, b) =>
       sort === 'asc'
         ? a.name.localeCompare(b.name)
@@ -103,6 +115,19 @@ export function Apps() {
             Here&apos;s a list of your apps for the integration!
           </p>
         </div>
+        {isLoading ? (
+          <div className='space-y-4 py-4'>
+            <Skeleton className='h-10 w-full' />
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className='h-32 w-full' />
+              ))}
+            </div>
+          </div>
+        ) : error ? (
+          <div className='py-4 text-destructive'>Failed to load apps</div>
+        ) : (
+          <>
         <div className='my-4 flex items-end justify-between sm:my-0 sm:items-center'>
           <div className='flex flex-col gap-4 sm:my-4 sm:flex-row'>
             <Input
@@ -173,6 +198,8 @@ export function Apps() {
             </li>
           ))}
         </ul>
+          </>
+        )}
       </Main>
     </>
   )
