@@ -1,106 +1,151 @@
 import { test, expect } from './utils/test-helpers';
-import { DashboardPage } from './utils/page-objects';
 
 test.describe('Dashboard Page', () => {
-  test('READ-DISPLAY: should display dashboard with all stat cards', async ({ page }) => {
+  test('DASH-R1: User can view dashboard with stat cards and overview', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    
-    // Verify heading
-    await expect(dashboardPage.heading).toBeVisible();
-    
-    // Verify all stat cards are visible
-    await expect(page.getByText('Total Revenue', { exact: true })).toBeVisible();
-    await expect(page.getByText('$45,231.89')).toBeVisible();
-    
-    await expect(page.getByText('Subscriptions', { exact: true })).toBeVisible();
-    await expect(page.getByText('+2350')).toBeVisible();
-    
-    await expect(page.getByText('Sales', { exact: true })).toBeVisible();
-    await expect(page.getByText('+12,234')).toBeVisible();
-    
-    await expect(page.getByText('Active Now', { exact: true })).toBeVisible();
-    await expect(page.getByText('+573')).toBeVisible();
-  });
-
-  test('READ-TABS: should display tabs and default to Overview', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    
-    // Verify tabs are visible
-    await expect(dashboardPage.overviewTab).toBeVisible();
-    await expect(dashboardPage.analyticsTab).toBeVisible();
-    await expect(dashboardPage.reportsTab).toBeVisible();
-    await expect(dashboardPage.notificationsTab).toBeVisible();
-    
-    // Verify Overview tab is selected by default
-    await expect(dashboardPage.overviewTab).toHaveAttribute('data-state', 'active');
-  });
-
-  test('READ-OVERVIEW: should display Overview chart and Recent Sales', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    // Verify Overview section content - use CardTitle selector
-    await expect(page.locator('[data-slot="card-title"]').filter({ hasText: 'Overview' })).toBeVisible();
-    await expect(page.locator('[data-slot="card-title"]').filter({ hasText: 'Recent Sales' })).toBeVisible();
-    await expect(page.getByText('You made 265 sales this month.')).toBeVisible();
-  });
-
-  test('READ-DOWNLOAD: should display download button', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    await expect(dashboardPage.downloadButton).toBeVisible();
+    // Use main locator for app pages - cleaner snapshots without sidebar/header
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Dashboard" [level=1]
+        - button "Download"
+        - tablist:
+          - tab "Overview" [selected]
+          - tab "Analytics"
+          - tab "Reports" [disabled]
+          - tab "Notifications" [disabled]
+        - tabpanel "Overview":
+          - text: Total Revenue
+          - img
+          - text: /\\$\\d+,\\d+\\.\\d+/
+          - paragraph: /\\+\\d+\\.\\d+% from last month/
+          - text: Subscriptions
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+\\.\\d+% from last month/
+          - text: ""
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+% from last month/
+          - text: Active Now
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+ since last hour/
+          - text: ""
+          - application: /Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec \\$0 \\$\\d+ \\$\\d+ \\$\\d+ \\$\\d+/
+          - text: /Recent Sales You made \\d+ sales this month\\. OM/
+          - paragraph: Olivia Martin
+          - paragraph: olivia.martin@email.com
+          - text: /\\+\\$\\d+,\\d+\\.\\d+ JL/
+          - paragraph: Jackson Lee
+          - paragraph: jackson.lee@email.com
+          - text: /\\+\\$\\d+\\.\\d+ IN/
+          - paragraph: Isabella Nguyen
+          - paragraph: isabella.nguyen@email.com
+          - text: /\\+\\$\\d+\\.\\d+ WK/
+          - paragraph: William Kim
+          - paragraph: will@email.com
+          - text: /\\+\\$\\d+\\.\\d+ SD/
+          - paragraph: Sofia Davis
+          - paragraph: sofia.davis@email.com
+          - text: ""
+    `);
   });
 });
 
 test.describe('Dashboard Tab Navigation', () => {
-  test('WRITE-TAB-SWITCH: should switch to Analytics tab', async ({ page }) => {
+  test('DASH-W1: User can switch to Analytics tab', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    
-    // Click Analytics tab
-    await dashboardPage.switchToAnalytics();
-    
-    // Verify Analytics tab is now active
-    await expect(dashboardPage.analyticsTab).toHaveAttribute('data-state', 'active');
-    await expect(dashboardPage.overviewTab).toHaveAttribute('data-state', 'inactive');
+    await page.getByRole('tab', { name: /analytics/i }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Dashboard" [level=1]
+        - button "Download"
+        - tablist:
+          - tab "Overview"
+          - tab "Analytics" [selected]
+          - tab "Reports" [disabled]
+          - tab "Notifications" [disabled]
+        - tabpanel "Analytics":
+          - text: Traffic Overview Weekly clicks and unique visitors
+          - application: /Mon Tue Wed Thu Fri Sat Sun 0 \\d+ \\d+ \\d+ \\d+/
+          - text: Total Clicks
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+\\.\\d+% vs last week/
+          - text: Unique Visitors
+          - img
+          - text: ""
+          - paragraph: +5.8% vs last week
+          - text: Bounce Rate
+          - img
+          - text: ""
+          - paragraph: "-3.2% vs last week"
+          - text: Avg. Session
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+[hmsp]+ vs last week/
+          - text: Referrers Top sources driving traffic
+          - list:
+            - listitem: /Direct \\d+/
+            - listitem: /Product Hunt \\d+/
+            - listitem: /Twitter \\d+/
+            - listitem: /Blog \\d+/
+          - text: Devices How users access your app
+          - list:
+            - listitem: /Desktop \\d+%/
+            - listitem: /Mobile \\d+%/
+            - listitem: Tablet 4%
+    `);
   });
 
-  test('WRITE-TAB-DISABLED: should not allow clicking disabled tabs', async ({ page }) => {
+  test('DASH-W2: User can return to Overview from Analytics', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    
-    // Verify Reports and Notifications tabs are disabled
-    await expect(dashboardPage.reportsTab).toBeDisabled();
-    await expect(dashboardPage.notificationsTab).toBeDisabled();
-  });
-
-  test('WRITE-TAB-RETURN: should return to Overview from Analytics', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    
-    const dashboardPage = new DashboardPage(page);
-    
-    // Switch to Analytics
-    await dashboardPage.switchToAnalytics();
-    await expect(dashboardPage.analyticsTab).toHaveAttribute('data-state', 'active');
-    
-    // Switch back to Overview
-    await dashboardPage.switchToOverview();
-    await expect(dashboardPage.overviewTab).toHaveAttribute('data-state', 'active');
-    
-    // Verify Overview content is visible again
-    await expect(page.locator('[data-slot="card-title"]').filter({ hasText: 'Overview' })).toBeVisible();
+    await page.getByRole('tab', { name: /analytics/i }).click();
+    await page.getByRole('tab', { name: /overview/i }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Dashboard" [level=1]
+        - button "Download"
+        - tablist:
+          - tab "Overview" [selected]
+          - tab "Analytics"
+          - tab "Reports" [disabled]
+          - tab "Notifications" [disabled]
+        - tabpanel "Overview":
+          - text: Total Revenue
+          - img
+          - text: /\\$\\d+,\\d+\\.\\d+/
+          - paragraph: /\\+\\d+\\.\\d+% from last month/
+          - text: Subscriptions
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+\\.\\d+% from last month/
+          - text: ""
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+% from last month/
+          - text: Active Now
+          - img
+          - text: ""
+          - paragraph: /\\+\\d+ since last hour/
+          - text: ""
+          - application: /Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec \\$0 \\$\\d+ \\$\\d+ \\$\\d+ \\$\\d+/
+          - text: /Recent Sales You made \\d+ sales this month\\. OM/
+          - paragraph: Olivia Martin
+          - paragraph: olivia.martin@email.com
+          - text: /\\+\\$\\d+,\\d+\\.\\d+ JL/
+          - paragraph: Jackson Lee
+          - paragraph: jackson.lee@email.com
+          - text: /\\+\\$\\d+\\.\\d+ IN/
+          - paragraph: Isabella Nguyen
+          - paragraph: isabella.nguyen@email.com
+          - text: /\\+\\$\\d+\\.\\d+ WK/
+          - paragraph: William Kim
+          - paragraph: will@email.com
+          - text: /\\+\\$\\d+\\.\\d+ SD/
+          - paragraph: Sofia Davis
+          - paragraph: sofia.davis@email.com
+          - text: ""
+    `);
   });
 });

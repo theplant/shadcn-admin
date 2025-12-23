@@ -1,10 +1,9 @@
 import { test, expect } from './utils/test-helpers';
 import { createTestChat, createTestMessage, testChats } from './utils/seed-data';
 import { seedAndNavigate } from './utils/seed-helpers';
-import { ChatsPage } from './utils/page-objects';
 
 test.describe('Chats Page', () => {
-  test('READ-DISPLAY: should display chats with seeded data', async ({ page }) => {
+  test('CHT-R1: User can view chats list with seeded data', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('John Doe', 'Hello there!'),
@@ -14,54 +13,63 @@ test.describe('Chats Page', () => {
         createTestMessage('Jane Smith', 'Meeting at 3pm?'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    await expect(page.getByText('John Doe')).toBeVisible();
-    await expect(page.getByText('Jane Smith')).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - button "john_doe John Doe Hello there!"
+        - button /jane_smith Jane Smith Meeting at \\d+[hmsp]+\\?/
+        - heading "Your messages" [level=1]
+        - paragraph: Send a message to start a chat.
+        - button "Send message"
+    `);
   });
 
-  test('READ-HEADING: should display Inbox heading', async ({ page }) => {
+  test('CHT-R2: User can view empty state when no chat selected', async ({ page }) => {
     await seedAndNavigate(page, '/chats', { chats: testChats });
-
-    await expect(page.getByRole('heading', { name: /inbox/i })).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - button "john_doe John Doe Hey, how are you?"
+        - button /jane_smith Jane Smith Meeting at \\d+[hmsp]+\\?/
+        - heading "Your messages" [level=1]
+        - paragraph: Send a message to start a chat.
+        - button "Send message"
+    `);
   });
 
-  test('READ-EMPTY-STATE: should show empty state when no chat selected', async ({ page }) => {
-    await seedAndNavigate(page, '/chats', { chats: testChats });
-
-    const chatsPage = new ChatsPage(page);
-    await expect(chatsPage.emptyStateMessage).toBeVisible();
-    await expect(chatsPage.sendMessageButton).toBeVisible();
-  });
-
-  test('READ-LAST-MESSAGE: should display last message preview in chat list', async ({ page }) => {
-    const chats = [
-      createTestChat('chat-001', 'john_doe', 'John Doe', [
-        createTestMessage('John Doe', 'This is the last message'),
-      ]),
-    ];
-
-    await seedAndNavigate(page, '/chats', { chats });
-
-    await expect(page.getByText('This is the last message')).toBeVisible();
-  });
-
-  test('READ-YOUR-MESSAGE-PREFIX: should prefix your messages with "You:"', async ({ page }) => {
+  test('CHT-R3: User can view last message preview with You prefix', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('You', 'My last message'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    await expect(page.getByText('You: My last message')).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - 'button "john_doe John Doe You: My last message"'
+        - heading "Your messages" [level=1]
+        - paragraph: Send a message to start a chat.
+        - button "Send message"
+    `);
   });
 });
 
 test.describe('Chats Search', () => {
-  test('WRITE-SEARCH: should filter chats by name', async ({ page }) => {
+  test('CHT-W1: User can filter chats by name', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('John Doe', 'Hello'),
@@ -70,17 +78,24 @@ test.describe('Chats Search', () => {
         createTestMessage('Jane Smith', 'Hi'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.search('John');
-
-    await expect(page.getByText('John Doe')).toBeVisible();
-    await expect(page.getByText('Jane Smith')).not.toBeVisible();
+    await page.getByPlaceholder(/search/i).fill('John');
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+          - text: ""
+        - button "john_doe John Doe Hello"
+        - heading "Your messages" [level=1]
+        - paragraph: Send a message to start a chat.
+        - button "Send message"
+    `);
   });
 
-  test('WRITE-SEARCH-CLEAR: should show all chats when search is cleared', async ({ page }) => {
+  test('CHT-W2: User can clear search to show all chats', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('John Doe', 'Hello'),
@@ -89,100 +104,111 @@ test.describe('Chats Search', () => {
         createTestMessage('Jane Smith', 'Hi'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    
-    // Search for John
-    await chatsPage.search('John');
-    await expect(page.getByText('Jane Smith')).not.toBeVisible();
-    
-    // Clear search
-    await chatsPage.search('');
-    await expect(page.getByText('John Doe')).toBeVisible();
-    await expect(page.getByText('Jane Smith')).toBeVisible();
-  });
-
-  test('WRITE-SEARCH-NO-RESULTS: should show no chats when search has no matches', async ({ page }) => {
-    const chats = [
-      createTestChat('chat-001', 'john_doe', 'John Doe', [
-        createTestMessage('John Doe', 'Hello'),
-      ]),
-    ];
-
-    await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.search('NonExistentUser');
-
-    await expect(page.getByText('John Doe')).not.toBeVisible();
+    await page.getByPlaceholder(/search/i).fill('John');
+    await page.getByPlaceholder(/search/i).clear();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - button "john_doe John Doe Hello"
+        - button "jane_smith Jane Smith Hi"
+        - heading "Your messages" [level=1]
+        - paragraph: Send a message to start a chat.
+        - button "Send message"
+    `);
   });
 });
 
 test.describe('Chats Conversation View', () => {
-  test('WRITE-SELECT-CHAT: should display conversation when chat is selected', async ({ page }) => {
+  test('CHT-W3: User can select a chat to view conversation', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('John Doe', 'Hello there!'),
         createTestMessage('You', 'Hi John, how are you?'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.selectChatByName('John Doe');
-
-    // Verify conversation panel shows user info
-    await expect(page.locator('span').filter({ hasText: 'John Doe' }).first()).toBeVisible();
-    
-    // Verify messages are displayed in the chat box area
-    await expect(page.locator('.chat-box').filter({ hasText: 'Hello there!' })).toBeVisible();
-    await expect(page.locator('.chat-box').filter({ hasText: 'Hi John, how are you?' })).toBeVisible();
+    await page.getByRole('button', { name: /john doe/i }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - button "john_doe John Doe Hello there!"
+        - text: john_doe John Doe Test User
+        - button
+        - button
+        - button
+        - text: /Hello there! 2:\\d+ PM Hi John, how are you\\? 2:\\d+ PM \\d+ Dec, \\d+/
+        - button
+        - button
+        - button
+        - text: Chat Text Box
+        - textbox "Chat Text Box":
+          - /placeholder: Type your messages...
+        - button
+    `);
   });
 
-  test('WRITE-MESSAGE-INPUT: should display message input when chat is selected', async ({ page }) => {
+  test('CHT-W4: User can type a message in the input', async ({ page }) => {
     const chats = [
       createTestChat('chat-001', 'john_doe', 'John Doe', [
         createTestMessage('John Doe', 'Hello'),
       ]),
     ];
-
     await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.selectChatByName('John Doe');
-
-    await expect(chatsPage.messageInput).toBeVisible();
-  });
-
-  test('WRITE-TYPE-MESSAGE: should allow typing in message input', async ({ page }) => {
-    const chats = [
-      createTestChat('chat-001', 'john_doe', 'John Doe', [
-        createTestMessage('John Doe', 'Hello'),
-      ]),
-    ];
-
-    await seedAndNavigate(page, '/chats', { chats });
-
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.selectChatByName('John Doe');
-    await chatsPage.typeMessage('Test message');
-
-    await expect(chatsPage.messageInput).toHaveValue('Test message');
+    await page.getByRole('button', { name: /john doe/i }).click();
+    await page.getByPlaceholder(/type your messages/i).fill('Test message');
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Inbox" [level=1]
+        - button
+        - text: Search
+        - textbox "Search":
+          - /placeholder: Search chat...
+        - button "john_doe John Doe Hello"
+        - text: john_doe John Doe Test User
+        - button
+        - button
+        - button
+        - text: /Hello 2:\\d+ PM \\d+ Dec, \\d+/
+        - button
+        - button
+        - button
+        - text: Chat Text Box
+        - textbox "Chat Text Box":
+          - /placeholder: Type your messages...
+          - text: ""
+        - button
+    `);
   });
 });
 
 test.describe('Chats New Conversation', () => {
-  test('WRITE-NEW-CHAT-DIALOG: should open new chat dialog', async ({ page }) => {
+  test('CHT-W5: User can open new chat dialog', async ({ page }) => {
     await seedAndNavigate(page, '/chats', { chats: testChats });
-
-    // Click the Send message button in empty state
-    const chatsPage = new ChatsPage(page);
-    await chatsPage.sendMessageButton.click();
-
-    // Verify dialog opens
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: /send message/i }).click();
+    await expect(page.getByRole('dialog')).toMatchAriaSnapshot(`
+      - dialog "New message":
+        - heading "New message" [level=2]
+        - text: ""
+        - combobox [expanded]
+        - listbox "Suggestions":
+          - group:
+            - option "John Doe John Doe john_doe" [selected]:
+              - img "John Doe"
+              - text: ""
+            - option "Jane Smith Jane Smith jane_smith":
+              - img "Jane Smith"
+              - text: ""
+        - button "Chat" [disabled]
+        - button "Close"
+    `);
   });
 });

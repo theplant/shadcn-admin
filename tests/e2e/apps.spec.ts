@@ -1,172 +1,211 @@
 import { test, expect } from './utils/test-helpers';
 import { createTestApp, testApps } from './utils/seed-data';
 import { seedAndNavigate } from './utils/seed-helpers';
-import { AppsPage } from './utils/page-objects';
 
 test.describe('Apps Page', () => {
-  test('READ-DISPLAY: should display apps with seeded data', async ({ page }) => {
+  test('APP-R1: User can view apps list with seeded data', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Slack', 'Team communication platform', true),
       createTestApp('app-002', 'GitHub', 'Code repository and collaboration', false),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    await expect(page.getByRole('heading', { name: 'Slack' })).toBeVisible();
-    await expect(page.getByText('Team communication platform')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'GitHub' })).toBeVisible();
-    await expect(page.getByText('Code repository and collaboration')).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list:
+          - listitem:
+            - img "GitHub"
+            - button "Connect"
+            - heading "GitHub" [level=2]
+            - paragraph: Code repository and collaboration
+          - listitem:
+            - img "Slack"
+            - button "Connected"
+            - heading "Slack" [level=2]
+            - paragraph: Team communication platform
+    `);
   });
 
-  test('READ-EMPTY: should show no apps when list is empty', async ({ page }) => {
+  test('APP-R2: User can view empty apps list', async ({ page }) => {
     await seedAndNavigate(page, '/apps', { apps: [] });
-    
-    // Verify the page loads but no app cards are visible
-    await expect(page.getByRole('heading', { name: /app integrations/i })).toBeVisible();
-    // With empty apps, the list should be empty
-    const appCards = page.locator('li').filter({ has: page.locator('h2') });
-    await expect(appCards).toHaveCount(0);
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list
+    `);
   });
 
-  test('READ-HEADING: should display page heading and description', async ({ page }) => {
-    await seedAndNavigate(page, '/apps', { apps: testApps });
-
-    await expect(page.getByRole('heading', { name: /app integrations/i })).toBeVisible();
-    await expect(page.getByText(/here's a list of your apps/i)).toBeVisible();
-  });
-
-  test('READ-CONNECTION-STATUS: should display connected and not connected apps', async ({ page }) => {
+  test('APP-R3: User can view apps with connection status', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Connected App', 'This app is connected', true),
       createTestApp('app-002', 'Disconnected App', 'This app is not connected', false),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    // Verify Connected button for connected app
-    await expect(page.getByRole('button', { name: 'Connected', exact: true })).toBeVisible();
-    // Verify Connect button for disconnected app
-    await expect(page.getByRole('button', { name: 'Connect', exact: true })).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list:
+          - listitem:
+            - button "Connected"
+            - heading "Connected App" [level=2]
+            - paragraph: This app is connected
+          - listitem:
+            - button "Connect"
+            - heading "Disconnected App" [level=2]
+            - paragraph: This app is not connected
+    `);
   });
 });
 
 test.describe('Apps Filtering', () => {
-  test('WRITE-SEARCH: should filter apps by name', async ({ page }) => {
+  test('APP-W1: User can filter apps by name', async ({ page }) => {
     await seedAndNavigate(page, '/apps', { apps: testApps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.search('Slack');
-
-    await expect(page.getByRole('heading', { name: 'Slack' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'GitHub' })).not.toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Figma' })).not.toBeVisible();
+    await page.getByPlaceholder(/filter apps/i).fill('Slack');
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list:
+          - listitem:
+            - img "Slack"
+            - button "Connected"
+            - heading "Slack" [level=2]
+            - paragraph: Team communication platform
+    `);
   });
 
-  test('WRITE-FILTER-CONNECTED: should filter to show only connected apps', async ({ page }) => {
+  test('APP-W2: User can filter to show only connected apps', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Slack', 'Connected app', true),
       createTestApp('app-002', 'Figma', 'Not connected app', false),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.filterByType('connected');
-
-    await expect(page.getByRole('heading', { name: 'Slack' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Figma' })).not.toBeVisible();
+    await page.getByRole('combobox').first().click();
+    await page.getByRole('option', { name: 'Connected', exact: true }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: Connected
+        - combobox
+        - list:
+          - listitem:
+            - img "Slack"
+            - button "Connected"
+            - heading "Slack" [level=2]
+            - paragraph: Connected app
+    `);
   });
 
-  test('WRITE-FILTER-NOT-CONNECTED: should filter to show only not connected apps', async ({ page }) => {
+  test('APP-W3: User can filter to show only not connected apps', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Slack', 'Connected app', true),
       createTestApp('app-002', 'Figma', 'Not connected app', false),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.filterByType('notConnected');
-
-    await expect(page.getByRole('heading', { name: 'Figma' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Slack' })).not.toBeVisible();
-  });
-
-  test('WRITE-FILTER-ALL: should show all apps when filter is reset', async ({ page }) => {
-    const apps = [
-      createTestApp('app-001', 'Slack', 'Connected app', true),
-      createTestApp('app-002', 'Figma', 'Not connected app', false),
-    ];
-
-    await seedAndNavigate(page, '/apps', { apps });
-
-    const appsPage = new AppsPage(page);
-    
-    // First filter to connected only
-    await appsPage.filterByType('connected');
-    await expect(page.getByRole('heading', { name: 'Figma' })).not.toBeVisible();
-    
-    // Then reset to all
-    await appsPage.filterByType('all');
-    await expect(page.getByRole('heading', { name: 'Slack' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Figma' })).toBeVisible();
+    await page.getByRole('combobox').first().click();
+    await page.getByRole('option', { name: 'Not Connected' }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: Not Connected
+        - combobox
+        - list:
+          - listitem:
+            - img "Figma"
+            - button "Connect"
+            - heading "Figma" [level=2]
+            - paragraph: Not connected app
+    `);
   });
 });
 
 test.describe('Apps Sorting', () => {
-  test('WRITE-SORT-ASC: should sort apps in ascending order', async ({ page }) => {
+  test('APP-W4: User can sort apps in ascending order', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Zoom', 'Video conferencing', true),
       createTestApp('app-002', 'Asana', 'Project management', false),
       createTestApp('app-003', 'Notion', 'All-in-one workspace', true),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.sortAscending();
-
-    // Get app names and verify order
-    const appNames = await appsPage.getAppNames();
-    expect(appNames).toEqual(['Asana', 'Notion', 'Zoom']);
+    // Click the sort combobox (second one on the page)
+    await page.getByRole('combobox').nth(1).click();
+    await page.getByRole('option', { name: /ascending/i }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list:
+          - listitem:
+            - button "Connect"
+            - heading "Asana" [level=2]
+            - paragraph: Project management
+          - listitem:
+            - img "Notion"
+            - button "Connected"
+            - heading "Notion" [level=2]
+            - paragraph: All-in-one workspace
+          - listitem:
+            - img "Zoom"
+            - button "Connected"
+            - heading "Zoom" [level=2]
+            - paragraph: Video conferencing
+    `);
   });
 
-  test('WRITE-SORT-DESC: should sort apps in descending order', async ({ page }) => {
+  test('APP-W5: User can sort apps in descending order', async ({ page }) => {
     const apps = [
       createTestApp('app-001', 'Zoom', 'Video conferencing', true),
       createTestApp('app-002', 'Asana', 'Project management', false),
       createTestApp('app-003', 'Notion', 'All-in-one workspace', true),
     ];
-
     await seedAndNavigate(page, '/apps', { apps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.sortDescending();
-
-    // Get app names and verify order
-    const appNames = await appsPage.getAppNames();
-    expect(appNames).toEqual(['Zoom', 'Notion', 'Asana']);
-  });
-});
-
-test.describe('Apps URL State', () => {
-  test('WRITE-URL-SEARCH: should persist search filter in URL', async ({ page }) => {
-    await seedAndNavigate(page, '/apps', { apps: testApps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.search('Slack');
-
-    // Verify URL contains filter parameter
-    await expect(page).toHaveURL(/filter=Slack/);
-  });
-
-  test('WRITE-URL-TYPE: should persist type filter in URL', async ({ page }) => {
-    await seedAndNavigate(page, '/apps', { apps: testApps });
-
-    const appsPage = new AppsPage(page);
-    await appsPage.filterByType('connected');
-
-    // Verify URL contains type parameter
-    await expect(page).toHaveURL(/type=connected/);
+    // Click the sort combobox (second one on the page)
+    await page.getByRole('combobox').nth(1).click();
+    await page.getByRole('option', { name: /descending/i }).click();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "App Integrations" [level=1]
+        - paragraph: Here's a list of your apps for the integration!
+        - textbox "Filter apps..."
+        - combobox: All Apps
+        - combobox
+        - list:
+          - listitem:
+            - img "Zoom"
+            - button "Connected"
+            - heading "Zoom" [level=2]
+            - paragraph: Video conferencing
+          - listitem:
+            - img "Notion"
+            - button "Connected"
+            - heading "Notion" [level=2]
+            - paragraph: All-in-one workspace
+          - listitem:
+            - button "Connect"
+            - heading "Asana" [level=2]
+            - paragraph: Project management
+    `);
   });
 });

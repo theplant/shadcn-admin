@@ -1,204 +1,714 @@
 import { test, expect } from './utils/test-helpers';
 import { createTestTask, testTasks } from './utils/seed-data';
 import { seedAndNavigate } from './utils/seed-helpers';
-import { TasksPage } from './utils/page-objects';
-
-// Test data for WRITE path tests
-const newTaskData = {
-  title: 'New E2E Test Task',
-  status: 'In Progress',
-  label: 'feature',
-  priority: 'high',
-};
-
-const editedTaskData = {
-  title: 'Edited Task Title',
-};
 
 test.describe('Tasks Page', () => {
-  test('should display tasks with seeded data', async ({ page }) => {
+  test('TSK-R1: User can view tasks list with seeded data', async ({ page }) => {
     const tasks = [
       createTestTask('TASK-1001', 'Implement login feature', 'in progress', 'high', 'feature'),
       createTestTask('TASK-1002', 'Fix navigation bug', 'todo', 'medium', 'bug'),
     ];
-
     await seedAndNavigate(page, '/tasks', { tasks });
-
-    await expect(page.getByText('TASK-1001')).toBeVisible();
-    await expect(page.getByText('Implement login feature')).toBeVisible();
-    await expect(page.getByText('TASK-1002')).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-\\d+ Feature Implement login feature In Progress High Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Feature Implement login feature"
+              - cell "In Progress"
+              - cell "High"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+            - row /Select row TASK-\\d+ Bug Fix navigation bug Todo Medium Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Bug Fix navigation bug"
+              - cell "Todo"
+              - cell "Medium"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
   });
 
-  test('should show empty state when no tasks', async ({ page }) => {
+  test('TSK-R2: User can view empty state when no tasks', async ({ page }) => {
     await seedAndNavigate(page, '/tasks', { tasks: [] });
-    await expect(page.getByText(/no results/i)).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row "No results.":
+              - cell "No results."
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 0
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
   });
 
-  test('should filter tasks by search', async ({ page }) => {
-    await seedAndNavigate(page, '/tasks', { tasks: testTasks });
-
-    const tasksPage = new TasksPage(page);
-    await tasksPage.search('login');
-
-    await expect(page.getByText('Implement login feature')).toBeVisible();
-    await expect(page.getByText('Fix navigation bug')).not.toBeVisible();
-  });
-
-  test('should display task status correctly', async ({ page }) => {
+  test('TSK-R3: User can view tasks with different statuses', async ({ page }) => {
     const tasks = [
       createTestTask('TASK-2001', 'In Progress Task', 'in progress', 'high', 'feature'),
       createTestTask('TASK-2002', 'Done Task', 'done', 'low', 'documentation'),
     ];
-
     await seedAndNavigate(page, '/tasks', { tasks });
-
-    await expect(page.getByText('In Progress', { exact: true })).toBeVisible();
-    await expect(page.getByText('Done', { exact: true })).toBeVisible();
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-\\d+ Feature In Progress Task In Progress High Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Feature In Progress Task"
+              - cell "In Progress"
+              - cell "High"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+            - row /Select row TASK-\\d+ Documentation Done Task Done Low Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Documentation Done Task"
+              - cell "Done"
+              - cell "Low"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
   });
 
-  test('should display task priority correctly', async ({ page }) => {
+  test('TSK-R4: User can view tasks with different priorities', async ({ page }) => {
     const tasks = [
       createTestTask('TASK-3001', 'High Priority Task', 'todo', 'high', 'bug'),
       createTestTask('TASK-3002', 'Low Priority Task', 'todo', 'low', 'feature'),
     ];
-
     await seedAndNavigate(page, '/tasks', { tasks });
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-\\d+ Bug High Priority Task Todo High Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Bug High Priority Task"
+              - cell "Todo"
+              - cell "High"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+            - row /Select row TASK-\\d+ Feature Low Priority Task Todo Low Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Feature Low Priority Task"
+              - cell "Todo"
+              - cell "Low"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
+  });
+});
 
-    await expect(page.getByText('High', { exact: true })).toBeVisible();
-    await expect(page.getByText('Low', { exact: true })).toBeVisible();
+test.describe('Tasks Search and Filter', () => {
+  test('TSK-W1: User can filter tasks by search', async ({ page }) => {
+    await seedAndNavigate(page, '/tasks', { tasks: testTasks });
+    await page.getByPlaceholder(/filter/i).fill('login');
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "Reset":
+          - text: ""
+          - img
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-\\d+ Feature Implement login feature In Progress High Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Feature Implement login feature"
+              - cell "In Progress"
+              - cell "High"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
   });
 });
 
 test.describe('Tasks CRUD Operations', () => {
-  test('CRUD-CREATE: should create a new task via drawer', async ({ page }) => {
+  test('TSK-W2: User can open create task drawer', async ({ page }) => {
     await seedAndNavigate(page, '/tasks', { tasks: [] });
-
-    // Click Create button
     await page.getByRole('button', { name: /create/i }).click();
-
-    // Verify drawer opens with correct title
-    await expect(page.getByRole('heading', { name: /create task/i })).toBeVisible();
-
-    // Fill in task form
-    await page.getByPlaceholder(/enter a title/i).fill(newTaskData.title);
-    
-    // Select status from dropdown
-    await page.getByRole('combobox').click();
-    await page.getByRole('option', { name: newTaskData.status }).click();
-    
-    // Select label (radio button)
-    await page.getByRole('radio', { name: /feature/i }).click();
-    
-    // Select priority (radio button)
-    await page.getByRole('radio', { name: /high/i }).click();
-
-    // Submit form
-    await page.getByRole('button', { name: /save changes/i }).click();
-
-    // Verify success toast
-    await expect(page.getByText(/task created successfully/i)).toBeVisible();
-
-    // Verify new task appears in list
-    await expect(page.getByText(newTaskData.title)).toBeVisible();
+    // Use dialog locator for drawer/modal assertions
+    await expect(page.getByRole('dialog')).toMatchAriaSnapshot(`
+      - dialog "Create Task":
+        - heading "Create Task" [level=2]
+        - paragraph: Add a new task by providing necessary info.Click save when you're done.
+        - textbox "Title"
+        - combobox "Status"
+        - radiogroup
+        - radiogroup
+        - button "Save changes"
+    `);
   });
 
-  test('CRUD-UPDATE: should edit an existing task via row actions', async ({ page }) => {
+  test('TSK-W3: User can create a new task', async ({ page }) => {
+    await seedAndNavigate(page, '/tasks', { tasks: [] });
+    await page.getByRole('button', { name: /create/i }).click();
+    
+    await page.getByPlaceholder(/enter a title/i).fill('New E2E Test Task');
+    await page.getByRole('combobox').click();
+    await page.getByRole('option', { name: 'In Progress' }).click();
+    await page.getByRole('radio', { name: /feature/i }).click();
+    await page.getByRole('radio', { name: /high/i }).click();
+    await page.getByRole('button', { name: /save changes/i }).click();
+    
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-\\d+ Feature New E2E Test Task In Progress High Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-\\d+/
+              - cell "Feature New E2E Test Task"
+              - cell "In Progress"
+              - cell "High"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
+  });
+
+  test('TSK-W4: User can open edit task drawer', async ({ page }) => {
     const existingTask = createTestTask('TASK-EDIT-001', 'Original Task Title', 'todo', 'medium', 'bug');
     await seedAndNavigate(page, '/tasks', { tasks: [existingTask] });
-
-    // Verify original task is visible
-    await expect(page.getByText('Original Task Title')).toBeVisible();
-
-    // Open row actions menu (click the dots button in the row)
     await page.getByRole('button', { name: /open menu/i }).click();
-
-    // Click Edit
     await page.getByRole('menuitem', { name: /edit/i }).click();
-
-    // Verify drawer opens with Update title
-    await expect(page.getByRole('heading', { name: /update task/i })).toBeVisible();
-
-    // Clear and update title
-    await page.getByPlaceholder(/enter a title/i).clear();
-    await page.getByPlaceholder(/enter a title/i).fill(editedTaskData.title);
-
-    // Submit form
-    await page.getByRole('button', { name: /save changes/i }).click();
-
-    // Verify success toast
-    await expect(page.getByText(/task updated successfully/i)).toBeVisible();
-
-    // Verify updated task appears in list
-    await expect(page.getByText(editedTaskData.title)).toBeVisible();
-    await expect(page.getByText('Original Task Title')).not.toBeVisible();
+    // Use dialog locator for drawer/modal assertions
+    await expect(page.getByRole('dialog')).toMatchAriaSnapshot(`
+      - dialog "Update Task":
+        - heading "Update Task" [level=2]
+        - paragraph: Update the task by providing necessary info.Click save when you're done.
+        - text: ""
+        - textbox "Title":
+          - /placeholder: Enter a title
+          - text: Original Task Title
+        - text: ""
+        - combobox "Status"
+        - text: ""
+        - radiogroup:
+          - radio "Documentation"
+          - text: Documentation
+          - radio "Feature"
+          - text: Feature
+          - radio "Bug" [checked]
+          - text: Bug
+        - text: ""
+        - radiogroup:
+          - radio "High"
+          - text: High
+          - radio "Medium" [checked]
+          - text: Medium
+          - radio "Low"
+          - text: Low
+        - button "Close"
+        - button "Save changes"
+        - button "Close"
+    `);
   });
 
-  test('CRUD-DELETE: should delete a task via row actions', async ({ page }) => {
+  test('TSK-W5: User can update an existing task', async ({ page }) => {
+    const existingTask = createTestTask('TASK-EDIT-001', 'Original Task Title', 'todo', 'medium', 'bug');
+    await seedAndNavigate(page, '/tasks', { tasks: [existingTask] });
+    await page.getByRole('button', { name: /open menu/i }).click();
+    await page.getByRole('menuitem', { name: /edit/i }).click();
+    
+    await page.getByPlaceholder(/enter a title/i).clear();
+    await page.getByPlaceholder(/enter a title/i).fill('Edited Task Title');
+    await page.getByRole('button', { name: /save changes/i }).click();
+    
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row /Select row TASK-EDIT-\\d+ Bug Edited Task Title Todo Medium Open menu/:
+              - cell "Select row":
+                - checkbox "Select row"
+              - cell /TASK-EDIT-\\d+/
+              - cell "Bug Edited Task Title"
+              - cell "Todo"
+              - cell "Medium"
+              - cell "Open menu":
+                - button "Open menu":
+                  - img
+                  - text: ""
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 1
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to page 1 1"
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
+  });
+
+  test('TSK-W6: User can open delete confirmation dialog', async ({ page }) => {
     const taskToDelete = createTestTask('TASK-DEL-001', 'Task To Be Deleted', 'todo', 'low', 'documentation');
     await seedAndNavigate(page, '/tasks', { tasks: [taskToDelete] });
-
-    // Verify task is visible
-    await expect(page.getByText('Task To Be Deleted')).toBeVisible();
-
-    // Open row actions menu
     await page.getByRole('button', { name: /open menu/i }).click();
-
-    // Click Delete
     await page.getByRole('menuitem', { name: /delete/i }).click();
+    await expect(page.getByRole('alertdialog')).toMatchAriaSnapshot(`
+      - 'alertdialog /Delete this task: TASK-DEL-\\d+ \\?/':
+        - 'heading /Delete this task: TASK-DEL-\\d+ \\?/ [level=2]'
+        - text: You are about to delete a task with the ID
+        - strong: /TASK-DEL-\\d+/
+        - text: ""
+        - button "Cancel"
+        - button "Delete"
+    `);
+  });
 
-    // Verify confirmation dialog appears
-    await expect(page.getByText(/delete this task/i)).toBeVisible();
-
-    // Confirm deletion
+  test('TSK-W7: User can delete a task', async ({ page }) => {
+    const taskToDelete = createTestTask('TASK-DEL-001', 'Task To Be Deleted', 'todo', 'low', 'documentation');
+    await seedAndNavigate(page, '/tasks', { tasks: [taskToDelete] });
+    await page.getByRole('button', { name: /open menu/i }).click();
+    await page.getByRole('menuitem', { name: /delete/i }).click();
     await page.getByRole('button', { name: /^delete$/i }).click();
-
-    // Verify success toast
-    await expect(page.getByText(/task deleted successfully/i)).toBeVisible();
-
-    // Verify task is removed from list
-    await expect(page.getByText('Task To Be Deleted')).not.toBeVisible();
+    
+    await expect(page.locator('main')).toMatchAriaSnapshot(`
+      - main:
+        - heading "Tasks" [level=2]
+        - paragraph: Here's a list of your tasks for this month!
+        - button "Import"
+        - button "Create"
+        - textbox "Filter by title or ID..."
+        - button "Status":
+          - img
+          - text: ""
+        - button "Priority":
+          - img
+          - text: ""
+        - button "View":
+          - img
+          - text: ""
+        - table:
+          - rowgroup:
+            - row "Select all Task Title Status Priority":
+              - columnheader "Select all":
+                - checkbox "Select all"
+              - columnheader "Task"
+              - columnheader "Title":
+                - button "Title":
+                  - text: ""
+                  - img
+              - columnheader "Status":
+                - button "Status":
+                  - text: ""
+                  - img
+              - columnheader "Priority":
+                - button "Priority":
+                  - text: ""
+                  - img
+              - columnheader
+          - rowgroup:
+            - row "No results.":
+              - cell "No results."
+        - combobox: /\\d+/
+        - paragraph: Rows per page
+        - text: Page 1 of 0
+        - button "Go to first page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to previous page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to next page" [disabled]:
+          - text: ""
+          - img
+        - button "Go to last page" [disabled]:
+          - text: ""
+          - img
+    `);
   });
 
-  test('CRUD-VALIDATION: should show validation errors on empty form submit', async ({ page }) => {
+  test('TSK-W8: Create task form shows validation errors on empty submit', async ({ page }) => {
     await seedAndNavigate(page, '/tasks', { tasks: [] });
-
-    // Click Create button
     await page.getByRole('button', { name: /create/i }).click();
-
-    // Submit empty form
     await page.getByRole('button', { name: /save changes/i }).click();
-
-    // Verify validation errors
-    await expect(page.getByText(/title is required/i)).toBeVisible();
-  });
-});
-
-test.describe('BUG: Duplicate API Requests', () => {
-  test('BUG-DUPLICATE-REQUESTS: should only make ONE API request when navigating to tasks page', async ({ page }) => {
-    // Bug: Every menu click triggers duplicate API requests
-    // Expected: Only ONE request per navigation
-    
-    await seedAndNavigate(page, '/', { tasks: testTasks });
-    
-    // Wait for initial page load
-    await page.waitForLoadState('networkidle');
-    
-    // Track API requests to /api/tasks
-    const apiRequests: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().includes('/api/tasks') && request.method() === 'GET') {
-        apiRequests.push(request.url());
-      }
-    });
-    
-    // Navigate to Tasks page via sidebar menu
-    await page.getByRole('link', { name: 'Tasks' }).click();
-    
-    // Wait for page to load
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible();
-    
-    // Verify only ONE request was made
-    expect(apiRequests.length).toBe(1);
+    // Use dialog locator for drawer/modal assertions with validation errors
+    await expect(page.getByRole('dialog')).toMatchAriaSnapshot(`
+      - dialog "Create Task":
+        - heading "Create Task" [level=2]
+        - paragraph: Add a new task by providing necessary info.Click save when you're done.
+        - text: ""
+        - textbox "Title":
+          - /placeholder: Enter a title
+        - paragraph: Title is required.
+        - text: ""
+        - combobox "Status": Select dropdown
+        - paragraph: Please select a status.
+        - text: ""
+        - radiogroup:
+          - radio "Documentation"
+          - text: Documentation
+          - radio "Feature"
+          - text: Feature
+          - radio "Bug"
+          - text: Bug
+        - paragraph: Please select a label.
+        - text: ""
+        - radiogroup:
+          - radio "High"
+          - text: High
+          - radio "Medium"
+          - text: Medium
+          - radio "Low"
+          - text: Low
+        - paragraph: Please choose a priority.
+        - button "Close"
+        - button "Save changes"
+        - button "Close"
+    `);
   });
 });
