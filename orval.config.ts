@@ -14,10 +14,20 @@ export default defineConfig({
           path: './src/api/custom-fetch.ts',
           name: 'customFetch',
         },
+        // Without this, generated functions return
+        // { data, status, headers } instead of the bare payload.
+        fetch: {
+          includeHttpResponseReturnType: false,
+        },
       },
     },
     input: {
       target: './src/api/openapi.yaml',
+    },
+    // orval does not format what it emits, and `pnpm format:check` covers
+    // generated files too.
+    hooks: {
+      afterAllFilesWrite: 'prettier --write',
     },
   },
 })

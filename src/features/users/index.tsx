@@ -1,12 +1,12 @@
 import { getRouteApi } from '@tanstack/react-router'
+import { useListUsers } from '@/api/generated/endpoints/users/users'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useListUsers } from '@/api/generated/endpoints/users/users'
 import { UsersDialogs } from './components/users-dialogs'
 import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
@@ -48,7 +48,11 @@ export function Users() {
         ) : error ? (
           <div className='text-destructive'>Failed to load users</div>
         ) : (
-          <UsersTable data={data?.data ?? []} search={search} navigate={navigate} />
+          <UsersTable
+            data={data?.data ?? []}
+            search={search}
+            navigate={navigate}
+          />
         )}
       </Main>
 

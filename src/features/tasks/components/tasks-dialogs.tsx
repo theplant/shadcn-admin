@@ -1,10 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import {
+  useDeleteTask,
+  getListTasksQueryKey,
+} from '@/api/generated/endpoints/tasks/tasks'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { TasksImportDialog } from './tasks-import-dialog'
 import { TasksMutateDrawer } from './tasks-mutate-drawer'
 import { useTasks } from './tasks-provider'
-import { useDeleteTask, getListTasksQueryKey } from '@/api/generated/endpoints/tasks/tasks'
 
 export function TasksDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useTasks()
@@ -54,7 +57,9 @@ export function TasksDialogs() {
                 {
                   onSuccess: () => {
                     toast.success('Task deleted successfully')
-                    queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() })
+                    queryClient.invalidateQueries({
+                      queryKey: getListTasksQueryKey(),
+                    })
                     setOpen(null)
                     setTimeout(() => {
                       setCurrentRow(null)

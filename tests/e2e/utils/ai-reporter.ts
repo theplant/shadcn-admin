@@ -402,7 +402,6 @@ class AIReporter implements Reporter {
     // Format ARIA snapshot for readable output - preserve indentation structure
     const lines = snapshot.split('\n');
     const output: string[] = [];
-    let lineCount = 0;
     
     for (const line of lines) {
       if (!line.trim()) continue;
@@ -410,7 +409,6 @@ class AIReporter implements Reporter {
       // Preserve the ARIA tree indentation but add our prefix
       const displayLine = line.length > 100 ? line.substring(0, 100) + '...' : line;
       output.push(`      ${displayLine}`);
-      lineCount++;
 
     }
     

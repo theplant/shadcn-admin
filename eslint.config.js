@@ -7,7 +7,15 @@ import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig(
-  { ignores: ['dist', 'src/components/ui'] },
+  {
+    ignores: [
+      'dist',
+      'src/components/ui',
+      // Written by msw's postinstall; it already carries its own
+      // `/* eslint-disable */`, which this config then reports as unused.
+      'public/mockServiceWorker.js',
+    ],
+  },
   {
     extends: [
       js.configs.recommended,
@@ -55,5 +63,16 @@ export default defineConfig(
       // Prevent duplicate imports from the same module
       'no-duplicate-imports': 'error',
     },
+  },
+  {
+    // orval emits value imports and type imports as separate statements, and
+    // generated output is not hand-editable.
+    files: ['src/api/generated/**/*.ts'],
+    rules: { 'no-duplicate-imports': 'off' },
+  },
+  {
+    // This reporter's entire job is writing to the console.
+    files: ['tests/e2e/utils/ai-reporter.ts'],
+    rules: { 'no-console': 'off' },
   }
 )
