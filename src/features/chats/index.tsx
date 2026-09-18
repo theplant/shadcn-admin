@@ -19,7 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -40,7 +39,7 @@ export function Chats() {
     useState(false)
 
   // Use API hook for chat data
-  const { data, isLoading, error } = useListChats()
+  const { data } = useListChats()
   const conversations = (data?.data ?? []) as ChatUser[]
 
   // Filtered data based on the search query
