@@ -1,0 +1,11 @@
+# pnpm treats an ignored build script as an install error, so every one has to
+# be answered. Allowed: esbuild sets up the platform binary vite builds with,
+# msw keeps public/mockServiceWorker.js in step. The rest only report
+# telemetry - @swc/core included, whose native binding comes from its optional
+# platform package, not from its postinstall.
+allowBuilds:
+  esbuild: true
+  msw: true
+  '@clerk/shared': false
+  '@swc/core': false
+  '@scarf/scarf': false
