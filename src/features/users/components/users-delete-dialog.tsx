@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  useDeleteUser,
+  getListUsersQueryKey,
+} from '@/api/generated/endpoints/users/users'
+import type { User } from '@/api/generated/models'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { User } from '@/api/generated/models'
-import { useDeleteUser, getListUsersQueryKey } from '@/api/generated/endpoints/users/users'
 
 type UserDeleteDialogProps = {
   open: boolean

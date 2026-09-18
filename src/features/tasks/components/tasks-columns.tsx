@@ -1,9 +1,9 @@
 import { type ColumnDef } from '@tanstack/react-table'
+import type { Task } from '@/api/generated/models'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { labels, priorities, statuses } from '../data/data'
-import type { Task } from '@/api/generated/models'
 import { DataTableRowActions } from './data-table-row-actions'
 
 export const tasksColumns: ColumnDef<Task>[] = [

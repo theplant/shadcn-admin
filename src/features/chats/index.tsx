@@ -14,6 +14,7 @@ import {
   Video,
   MessagesSquare,
 } from 'lucide-react'
+import { useListChats } from '@/api/generated/endpoints/chats/chats'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,6 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { useListChats } from '@/api/generated/endpoints/chats/chats'
 import { NewChat } from './components/new-chat'
 import { type ChatUser, type Convo } from './data/chat-types'
 

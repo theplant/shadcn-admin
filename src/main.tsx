@@ -90,12 +90,14 @@ declare module '@tanstack/react-router' {
 // Enable MSW mocking when no real backend is configured
 async function enableMocking() {
   const hasRealBackend = !!import.meta.env.VITE_API_URL
-  
+
   if (!hasRealBackend) {
     const { worker } = await import('./mocks/browser')
+    // eslint-disable-next-line no-console
     console.log('[MSW] Mock Service Worker enabled')
     return worker.start({ onUnhandledRequest: 'bypass' })
   } else {
+    // eslint-disable-next-line no-console
     console.log('[App] Using real backend:', import.meta.env.VITE_API_URL)
   }
 }
@@ -120,8 +122,6 @@ if (!rootElement.innerHTML) {
       </QueryClientProvider>
     )
     // Only use StrictMode in production to avoid duplicate API requests in dev
-    root.render(
-      import.meta.env.PROD ? <StrictMode>{app}</StrictMode> : app
-    )
+    root.render(import.meta.env.PROD ? <StrictMode>{app}</StrictMode> : app)
   })
 }

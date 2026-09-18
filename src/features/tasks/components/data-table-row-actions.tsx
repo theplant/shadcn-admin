@@ -1,6 +1,7 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
 import { Trash2 } from 'lucide-react'
+import type { Task } from '@/api/generated/models'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,16 +17,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { labels } from '../data/data'
-import type { Task } from '@/api/generated/models'
 import { useTasks } from './tasks-provider'
 
 type DataTableRowActionsProps = {
   row: Row<Task>
 }
 
-export function DataTableRowActions({
-  row,
-}: DataTableRowActionsProps) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const task = row.original as Task
 
   const { setOpen, setCurrentRow } = useTasks()
