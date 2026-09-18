@@ -10,45 +10,17 @@ export class ApiError extends Error {
   }
 }
 
-type RequestConfig = {
-  url: string
-  method: string
-  params?: Record<string, unknown>
-  data?: unknown
-  headers?: Record<string, string>
-  signal?: AbortSignal
-}
-
+/**
+ * orval mutator. orval passes a ready URL (query string included) and an init
+ * carrying method, headers and a serialised body, so this only adds the fetch
+ * and the project's error and 204 handling.
+ */
 export const customFetch = async <T>(
-  config: RequestConfig,
-  _options?: RequestInit
+  url: string,
+  init?: RequestInit
 ): Promise<T> => {
-  const { url, method, params, data, headers, signal } = config
-  
-  // Build URL with query params
-  let fullUrl = url
-  if (params) {
-    const searchParams = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(v => searchParams.append(key, String(v)))
-      } else if (value !== undefined && value !== null) {
-        searchParams.append(key, String(value))
-      }
-    })
-    const queryString = searchParams.toString()
-    if (queryString) {
-      fullUrl = `${url}?${queryString}`
-    }
-  }
+  const response = await fetch(url, init)
 
-  const response = await fetch(fullUrl, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: data ? JSON.stringify(data) : undefined,
-    signal,
-  })
-  
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}))
     throw new ApiError(
@@ -58,11 +30,11 @@ export const customFetch = async <T>(
       errorBody.details
     )
   }
-  
+
   // Handle 204 No Content
   if (response.status === 204) {
     return undefined as T
   }
-  
+
   return response.json()
 }

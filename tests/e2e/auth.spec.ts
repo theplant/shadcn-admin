@@ -413,9 +413,7 @@ test.describe('Authentication', () => {
       - paragraph: Search for a command to run...
       - region "Notifications alt+T":
         - list:
-          - listitem:
-            - img
-            - text: Welcome back, test@example.com!
+          - listitem: Welcome back, test@example.com!
       - button "Open Tanstack query devtools":
         - img
       - contentinfo:
